@@ -76,6 +76,7 @@ struct GraphRuntimeModel:
     let name: String
     let providerID: GraphRuntimeProviderKind
     let contextWindow: Int?
+    let maxOutputTokens: Int?
     let pricingUSDPerMillionTokens: GraphRuntimeTokenPricing?
     let inputModalities: [GraphRuntimeInputModality]
     let thinking: [GraphRuntimeThinkingMode]
@@ -86,6 +87,7 @@ struct GraphRuntimeModel:
         name: String,
         providerID: GraphRuntimeProviderKind,
         contextWindow: Int? = nil,
+        maxOutputTokens: Int? = nil,
         pricingUSDPerMillionTokens: GraphRuntimeTokenPricing? = nil,
         inputModalities: [GraphRuntimeInputModality] = [],
         thinking: [GraphRuntimeThinkingMode] = [],
@@ -95,6 +97,7 @@ struct GraphRuntimeModel:
         self.name = name
         self.providerID = providerID
         self.contextWindow = contextWindow
+        self.maxOutputTokens = maxOutputTokens
         self.pricingUSDPerMillionTokens =
             pricingUSDPerMillionTokens
         self.inputModalities = inputModalities
@@ -196,7 +199,11 @@ struct GraphRuntimeCatalogSnapshot:
     func models(
         for providerID: GraphRuntimeProviderKind
     ) -> [GraphRuntimeModel] {
-        models
+        if providerID == .minimax {
+            return GraphRuntimeCatalogDiscovery.minimaxModels
+        }
+
+        return models
             .filter { $0.providerID == providerID }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
@@ -275,6 +282,9 @@ enum GraphRuntimeNodeBindingFactory {
             )
 
         case .openAICompatible:
+            let model = provider.id == .minimax && model.isEmpty
+                ? GraphRuntimeCatalogDiscovery.minimaxDefaultModel
+                : model
             var parameters: [String: GraphJSONValue] = [
                 "provider": .string(provider.id.rawValue),
                 "model": .string(model),
@@ -351,35 +361,41 @@ struct GraphRuntimeCatalogDiscovery:
     GraphRuntimeCatalogDiscovering,
     Sendable
 {
-    /// Built-in MiniMax model metadata.
+    static let minimaxDefaultModel = "MiniMax-M3.1-Flash"
+
+    /// Built-in MiniMax model metadata, in picker preference order.
     static let minimaxModels: [GraphRuntimeModel] = [
+        GraphRuntimeModel(
+            id: "minimax:MiniMax-M3.1-Flash",
+            name: minimaxDefaultModel,
+            providerID: .minimax,
+            contextWindow: 1_000_000,
+            maxOutputTokens: 524_288,
+            pricingUSDPerMillionTokens: GraphRuntimeTokenPricing(
+                input: 0.15,
+                output: 0.6,
+                cacheRead: 0.015,
+                cacheWrite: nil
+            ),
+            inputModalities: [.text, .image, .video],
+            thinking: [.adaptive]
+        ),
         GraphRuntimeModel(
             id: "minimax:MiniMax-M3",
             name: "MiniMax-M3",
             providerID: .minimax,
             contextWindow: 1_000_000,
             pricingUSDPerMillionTokens: GraphRuntimeTokenPricing(
-                input: 0.6,
-                output: 2.4,
-                cacheRead: 0.12,
-                cacheWrite: nil
-            ),
-            inputModalities: [.text, .image, .video],
-            thinking: [.adaptive, .disabled]
-        ),
-        GraphRuntimeModel(
-            id: "minimax:MiniMax-M2.7",
-            name: "MiniMax-M2.7",
-            providerID: .minimax,
-            contextWindow: 204_800,
-            pricingUSDPerMillionTokens: GraphRuntimeTokenPricing(
                 input: 0.3,
                 output: 1.2,
                 cacheRead: 0.06,
-                cacheWrite: 0.375
+                cacheWrite: nil
             ),
-            inputModalities: [.text],
-            thinking: [.alwaysOn]
+            inputModalities: [.text, .image, .video],
+            thinking: [.adaptive, .disabled],
+            details: "Standard pricing up to 512k input tokens; above 512k: " +
+                "$0.60 input, $2.40 output, $0.12 cache read per million tokens. " +
+                "Priority pricing is 1.5 times standard."
         ),
     ]
 

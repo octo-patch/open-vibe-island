@@ -973,9 +973,15 @@ final class GraphWorkspaceViewModel {
                     }
                 }
 
+                let boundModel: String
+                if case let .string(value) = binding.specification.parameters["model"] {
+                    boundModel = value
+                } else {
+                    boundModel = model
+                }
                 let values = [
                     ("provider:", provider.rawValue),
-                    ("model:", model),
+                    ("model:", boundModel),
                     ("agent:", agentProfile),
                 ]
 

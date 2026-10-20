@@ -248,43 +248,45 @@ final class GraphRuntimeCatalogTests: XCTestCase {
     {
         let models = GraphRuntimeCatalogDiscovery.minimaxModels
         let primary = try XCTUnwrap(
-            models.first { $0.name == "MiniMax-M3" }
+            models.first { $0.name == "MiniMax-M3.1-Flash" }
         )
         let secondary = try XCTUnwrap(
-            models.first { $0.name == "MiniMax-M2.7" }
+            models.first { $0.name == "MiniMax-M3" }
         )
 
         XCTAssertEqual(
-            models.map(\.name).sorted(),
-            ["MiniMax-M2.7", "MiniMax-M3"]
+            models.map(\.name),
+            ["MiniMax-M3.1-Flash", "MiniMax-M3"]
         )
         XCTAssertEqual(primary.providerID, .minimax)
         XCTAssertEqual(primary.contextWindow, 1_000_000)
+        XCTAssertEqual(primary.maxOutputTokens, 524_288)
         XCTAssertEqual(
             primary.pricingUSDPerMillionTokens,
             GraphRuntimeTokenPricing(
-                input: 0.6,
-                output: 2.4,
-                cacheRead: 0.12,
+                input: 0.15,
+                output: 0.6,
+                cacheRead: 0.015,
                 cacheWrite: nil
             )
         )
         XCTAssertEqual(primary.inputModalities, [.text, .image, .video])
-        XCTAssertEqual(primary.thinking, [.adaptive, .disabled])
+        XCTAssertEqual(primary.thinking, [.adaptive])
 
         XCTAssertEqual(secondary.providerID, .minimax)
-        XCTAssertEqual(secondary.contextWindow, 204_800)
+        XCTAssertEqual(secondary.contextWindow, 1_000_000)
         XCTAssertEqual(
             secondary.pricingUSDPerMillionTokens,
             GraphRuntimeTokenPricing(
                 input: 0.3,
                 output: 1.2,
                 cacheRead: 0.06,
-                cacheWrite: 0.375
+                cacheWrite: nil
             )
         )
-        XCTAssertEqual(secondary.inputModalities, [.text])
-        XCTAssertEqual(secondary.thinking, [.alwaysOn])
+        XCTAssertEqual(secondary.inputModalities, [.text, .image, .video])
+        XCTAssertEqual(secondary.thinking, [.adaptive, .disabled])
+        XCTAssertTrue(secondary.details?.contains("above 512k") == true)
     }
 
     func testMiniMaxBindingProducesOpenAICompatibleSpecification()
@@ -336,10 +338,9 @@ final class GraphRuntimeCatalogTests: XCTestCase {
 
         let minimaxModels = snapshot.models(for: .minimax)
             .map(\.name)
-            .sorted()
         XCTAssertEqual(
             minimaxModels,
-            ["MiniMax-M2.7", "MiniMax-M3"]
+            ["MiniMax-M3.1-Flash", "MiniMax-M3"]
         )
         XCTAssertNotNil(
             snapshot.provider(.minimax)

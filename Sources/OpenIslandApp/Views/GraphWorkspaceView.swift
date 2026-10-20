@@ -1715,6 +1715,11 @@ private struct GraphDefinitionInspector: View {
                 )
             ) {
                 Text("Select a model").tag("")
+                if selectedRuntimeProvider == .minimax,
+                   !selectedRuntimeModel.isEmpty,
+                   !models.contains(where: { $0.name == selectedRuntimeModel }) {
+                    Text(selectedRuntimeModel).tag(selectedRuntimeModel)
+                }
                 ForEach(models) { model in
                     Text(model.name).tag(model.name)
                 }
