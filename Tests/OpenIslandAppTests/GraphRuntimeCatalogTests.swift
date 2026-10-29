@@ -272,6 +272,13 @@ final class GraphRuntimeCatalogTests: XCTestCase {
         )
         XCTAssertEqual(primary.inputModalities, [.text, .image, .video])
         XCTAssertEqual(primary.thinking, [.adaptive])
+        XCTAssertEqual(primary.thinkingAlwaysOn, true)
+        XCTAssertEqual(
+            primary.reasoningEfforts,
+            [.low, .medium, .high, .xhigh, .max]
+        )
+        XCTAssertEqual(primary.reasoningEffortDefault, .max)
+        XCTAssertEqual(primary.serviceTierSupported, false)
 
         XCTAssertEqual(secondary.providerID, .minimax)
         XCTAssertEqual(secondary.contextWindow, 1_000_000)
@@ -286,6 +293,10 @@ final class GraphRuntimeCatalogTests: XCTestCase {
         )
         XCTAssertEqual(secondary.inputModalities, [.text, .image, .video])
         XCTAssertEqual(secondary.thinking, [.adaptive, .disabled])
+        XCTAssertEqual(secondary.thinkingAlwaysOn, false)
+        XCTAssertTrue(secondary.reasoningEfforts.isEmpty)
+        XCTAssertNil(secondary.reasoningEffortDefault)
+        XCTAssertEqual(secondary.serviceTierSupported, true)
         XCTAssertTrue(secondary.details?.contains("above 512k") == true)
     }
 

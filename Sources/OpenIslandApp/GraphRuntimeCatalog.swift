@@ -55,6 +55,14 @@ enum GraphRuntimeThinkingMode: String, Codable, Sendable {
     case alwaysOn = "always_on"
 }
 
+enum GraphRuntimeReasoningEffort: String, Codable, Sendable {
+    case low
+    case medium
+    case high
+    case xhigh
+    case max
+}
+
 struct GraphRuntimeTokenPricing:
     Equatable,
     Codable,
@@ -80,6 +88,10 @@ struct GraphRuntimeModel:
     let pricingUSDPerMillionTokens: GraphRuntimeTokenPricing?
     let inputModalities: [GraphRuntimeInputModality]
     let thinking: [GraphRuntimeThinkingMode]
+    let thinkingAlwaysOn: Bool?
+    let reasoningEfforts: [GraphRuntimeReasoningEffort]
+    let reasoningEffortDefault: GraphRuntimeReasoningEffort?
+    let serviceTierSupported: Bool?
     let details: String?
 
     init(
@@ -91,6 +103,10 @@ struct GraphRuntimeModel:
         pricingUSDPerMillionTokens: GraphRuntimeTokenPricing? = nil,
         inputModalities: [GraphRuntimeInputModality] = [],
         thinking: [GraphRuntimeThinkingMode] = [],
+        thinkingAlwaysOn: Bool? = nil,
+        reasoningEfforts: [GraphRuntimeReasoningEffort] = [],
+        reasoningEffortDefault: GraphRuntimeReasoningEffort? = nil,
+        serviceTierSupported: Bool? = nil,
         details: String? = nil
     ) {
         self.id = id
@@ -102,6 +118,10 @@ struct GraphRuntimeModel:
             pricingUSDPerMillionTokens
         self.inputModalities = inputModalities
         self.thinking = thinking
+        self.thinkingAlwaysOn = thinkingAlwaysOn
+        self.reasoningEfforts = reasoningEfforts
+        self.reasoningEffortDefault = reasoningEffortDefault
+        self.serviceTierSupported = serviceTierSupported
         self.details = details
     }
 }
@@ -378,7 +398,11 @@ struct GraphRuntimeCatalogDiscovery:
                 cacheWrite: nil
             ),
             inputModalities: [.text, .image, .video],
-            thinking: [.adaptive]
+            thinking: [.adaptive],
+            thinkingAlwaysOn: true,
+            reasoningEfforts: [.low, .medium, .high, .xhigh, .max],
+            reasoningEffortDefault: .max,
+            serviceTierSupported: false
         ),
         GraphRuntimeModel(
             id: "minimax:MiniMax-M3",
@@ -393,6 +417,8 @@ struct GraphRuntimeCatalogDiscovery:
             ),
             inputModalities: [.text, .image, .video],
             thinking: [.adaptive, .disabled],
+            thinkingAlwaysOn: false,
+            serviceTierSupported: true,
             details: "Standard pricing up to 512k input tokens; above 512k: " +
                 "$0.60 input, $2.40 output, $0.12 cache read per million tokens. " +
                 "Priority pricing is 1.5 times standard."
